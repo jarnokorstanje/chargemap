@@ -1,36 +1,26 @@
 const mongoose = require('mongoose');
 
-const Schema = mongoose.Schema;
-
-const stationSchema = new Schema({
-	title: String,
-	town: String,
-	addressline1: String,
-	stateorprovince: String,
-	postcode: Number,
-	location: {
+const stationSchema = new mongoose.Schema({
+	Title: String,
+	AddressLine1: String,
+	Town: String,
+	StateOrProvince: String,
+	Postcode: String,
+	Location: {
+		type: {
 			type: String,
-			coordinates: [{
-				0: String,
-				1: String,
-			}]
+			enum: ['Point'],
+		},
+		coordinates: {
+			type: [Number],
+		},
 	},
-	connections: [{
-		quantity: Number,
-		connectiontype: {
-			formalname: String,
-			title: String
+	Connections: [
+		{
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'Connection',
 		},
-		currenttype: {
-			description: String,
-			title: String
-		},
-		leveltype: {
-			title: String,
-			comments: String,
-			isfastchargecapable: Boolean
-		}
-	}]
-})
+	],
+});
 
 module.exports = mongoose.model('Station', stationSchema);

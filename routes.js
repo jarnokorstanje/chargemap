@@ -1,5 +1,9 @@
 const router = require('express').Router();
 const station = require('./models/station');
+const connection = require('./models/connection');
+const connectionType = require('./models/connectionType');
+const currentType = require('./models/currentType');
+const level = require('./models/level');
 const boundHelper = require('./helpers/boundHelper');
 
 router.route('/')
@@ -72,10 +76,27 @@ router.route('/')
     res.send(`stations post ${post.title} created with id: ${post._id}`);
   });
 
-router.route('/:id')
-  .get(async (req, res) => {
-    const stations = await station.findById(req.params.id);
-    res.send(stations);
-  })
+router.route('/:id').get(async (req, res) => {
+  try {
+    res.send(
+      await station.findById(req.params.id).populate({
+        path: 'Connections',
+        populate: [
+          {
+            path: 'ConnectionTypeID',
+          },
+          {
+            path: 'CurrentTypeID',
+          },
+          {
+            path: 'LevelID',
+          },
+        ],
+      })
+    );
+  } catch (e) {
+    res.send(`Error fetching station ${e.message}`);
+  }
+});
 
 module.exports = router;
