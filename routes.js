@@ -65,16 +65,6 @@ router.route('/')
       res.send(`Error fetching stations ${e.message}`);
     }
   })
-  .post(async (req, res) => {
-    const post = await station.create({
-      title: req.body.title,
-      town: req.body.town,
-      addressline1: req.body.addressline1,
-      stateorprovince: req.body.stateorprovince,
-      postcode: req.body.postcode
-    });
-    res.send(`stations post ${post.title} created with id: ${post._id}`);
-  });
 
 router.route('/:id').get(async (req, res) => {
   try {
@@ -96,6 +86,80 @@ router.route('/:id').get(async (req, res) => {
     );
   } catch (e) {
     res.send(`Error fetching station ${e.message}`);
+  }
+});
+
+router.post('/', async (req, res) => {
+  const connections = await req.body.Connections;
+
+  try {
+    const connectionIds = await Promise.all(
+      connections.map(async (con) => {
+        const newConnection = new connection(con);
+        await newConnection.save();
+        return newConnection._id;
+      })
+    );
+
+    const newStation = await new station({
+      ...req.body.Station,
+      Connections: connectionIds,
+    });
+
+    await station.create(newStation);
+    await newStation.save();
+
+    res.send(
+      `Created station with id ${newStation._id}`
+    );
+  } catch (e) {
+    res.send(`Error creating station ${e.message}`);
+  }
+});
+
+router.put('/', async (req, res) => {
+  try {
+    const { Station, Connections } = req.body;
+
+    const updatedStation = await station.findByIdAndUpdate(
+      Station._id,
+      Station,
+      {
+        new: true,
+        upsert: true,
+      }
+    );
+
+    const updatedConnections = await Promise.all(
+      Connections.map(async (con) => {
+        try {
+          const updCon = await connection.findByIdAndUpdate(con._id, con, {
+            new: true,
+            upsert: true,
+          });
+          return updCon._id;
+        } catch (e) {
+          res.send(`Error updating connections ${e.message}`);
+        }
+      })
+    );
+
+    updatedStation.Connections = updatedConnections;
+
+    await updatedStation.save();
+
+    res.send(`Updated station ${updatedStation}`);
+  } catch (e) {
+    res.send(`Error updating station ${e.message}`);
+  }
+});
+
+router.delete('/:id', async (req, res) => {
+  try {
+    const del = await station.deleteOne({ _id: req.params.id });
+    res.send(`Deleted station`);
+  } catch (e) {
+    res.send(`Error deleting station ${e.message}`);
   }
 });
 
