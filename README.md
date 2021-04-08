@@ -1,4 +1,4 @@
-# chargemap
+# chargemap rest
 
 Example requests:
 
